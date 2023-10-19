@@ -1,5 +1,5 @@
 # POEDSS - Diabetes Type 1 Management System
-This is a copy of repo https://github.com/tina5kova/POEDSS. Agreed to be publicly copied here
+This is a copy of repo https://github.com/tina5kova/POEDSS. Agreed to be publicly copied here.
 
 Authors 
 Jung, Christopher
@@ -9,7 +9,7 @@ Roskovs, Nikita
 Thielemann, Niklas Broch
 Wilting, Bjørn
 
-Screencast: https://www.youtube.com/watch?v=Zh3pDmqEew0&ab_channel=ChristopherJung
+Screencast: https://youtu.be/Zh3pDmqEew0
 
 ## Description
 This project explores the application of process-oriented and event-driven software systems for the daily management of type 1 diabetes. Type 1 diabetes is an autoimmune condition affecting insulin production, necessitating external insulin administration based on food intake, blood sugar levels, and other factors. Patients with type 1 diabetes require significant lifestyle adjustments to maintain their health and avoid severe complications. To address these challenges, the project investigates the use of software to facilitate type 1 diabetes management. The approach involves identifying essential patient processes, integrating additional data sources for comprehensive blood sugar insights, and utilizing Camunda for process modeling and execution, along with Siddhi for real-time event processing and user interactions.
