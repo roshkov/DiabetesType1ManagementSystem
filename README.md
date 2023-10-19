@@ -1,13 +1,13 @@
 # POEDSS - Diabetes Type 1 Management System
 This is a copy of repo https://github.com/tina5kova/POEDSS. Agreed to be publicly copied here.
 
-Authors 
-Jung, Christopher
-Lorentzen, Thomas Kristian
-Petkova, Tina Plamenova
-Roskovs, Nikita
-Thielemann, Niklas Broch
-Wilting, Bjørn
+Authors:<br>
+Jung, Christopher <br>
+Lorentzen, Thomas Kristian <br>
+Petkova, Tina Plamenova <br>
+Roskovs, Nikita <br>
+Thielemann, Niklas Broch <br>
+Wilting, Bjørn <br>
 
 Screencast: https://youtu.be/Zh3pDmqEew0
 
