@@ -1,0 +1,86 @@
+@App:name('ketoacidosis')
+@App:description('ketoacidosis')
+
+--------- Streams ----------
+
+
+-- Receive Camunda Messages
+@source(type='inMemory', topic="camundaInputTopic", @map(type="passThrough"))
+define stream CamundaInputStream(patientId string, description string, processInstanceId string);
+--
+
+-- Receive Camunda Messages
+@sink(type='log')
+@source(type='inMemory', topic="externalTopic", @map(type="passThrough"))
+define stream externalStream (
+  patientId string,
+  description string,
+  value string,
+  processInstanceId string
+);
+--
+
+-- Send into external doctor sink
+@sink(type='inMemory', topic="externalDoctorTopic", @map(type="passThrough"))
+define stream externalDoctorSinkStream(patientId string, description string, processInstanceId string);
+--
+
+-- Send into external patient sink
+@sink(type='inMemory', topic="externalPatientTopic", @map(type="passThrough"))
+define stream externalPatientSinkStream(patientId string, description string, processInstanceId string);
+--
+
+-- Send into ketone concentration stream
+@sink(type='inMemory', topic="ketoneConcentrationTopic", @map(type="passThrough"))
+define stream KetoneConcentrationStream(patient string, message string, ketoneConcentration double, processInstanceId string);
+--
+
+-- Send a message with no process instance to camunda
+@sink(type='log')
+@sink(type='http',
+  publisher.url='http://camunda.local:8080/engine-rest/message',
+  headers="'Host:camunda.local:8080",
+  @map(type='json', @payload(
+  """
+  {
+    "messageName":"{{message}}",
+    "processInstanceId": "{{processInstanceId}}",
+    "processVariables":
+    {
+      "risk":
+      {
+        "value":"{{risk}}",
+        "type":"String"
+      }
+    }
+  }"""
+  )))
+define stream riskEvaluationStream(risk string, message string, processInstanceId string);
+
+
+@source(type="inMemory", topic="messageNoProcessTopic", @map(type="passThrough"))
+define stream messageNoProcessMemory(glucose double, message string, patient string);
+
+---------- Filters ----------
+
+-- Forward messages from Camunda to API (patient)
+from CamundaInputStream[description == 'Evaluate Ketoacidosis Level' 
+or description == 'Measure Ketone Concentration' 
+or description == 'Call Doctor Notification']
+select patientId, description, processInstanceId
+insert into externalPatientSinkStream;
+
+-- Forward messages from Camunda to API (doctor)
+from CamundaInputStream[description == 'Doctor Notification Ketoacidosis' 
+or description == 'High Ketone Measurement Doctor Notification']
+select patientId, description, processInstanceId
+insert into externalDoctorSinkStream;
+
+-- Forward response from API to Camunda
+from externalStream[description == 'Measure Ketone Concentration']
+select patientId as patient, "Message_Ketone_Concentration_Level_Received" as message, convert(value, 'double') as ketoneConcentration, processInstanceId
+insert into KetoneConcentrationStream;
+
+from externalStream[description == 'Evaluate Ketoacidosis Level']
+select value as risk, "Message_Risk_Evaluation_Received" as message, processInstanceId
+insert into riskEvaluationStream;

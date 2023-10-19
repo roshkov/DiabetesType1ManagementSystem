@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_0xib2bp" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="4.12.0" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.15.0">
+  <bpmn:collaboration id="Collaboration_102azpx">
+    <bpmn:participant id="Participant_Hypoglycemia_Detected" name="Hypoglycemia Detected" processRef="HypoglycemiaDetectedProcess" />
+  </bpmn:collaboration>
+  <bpmn:process id="HypoglycemiaDetectedProcess" name="" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_CGM_Hypo_Warning" name="CGM Hypo Warning">
+      <bpmn:outgoing>Flow_1dfb4me</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_0hc1ioq" messageRef="Message_03pheww" />
+    </bpmn:startEvent>
+    <bpmn:serviceTask id="Activity_Send_Hypo" name="Send Hypo">
+      <bpmn:extensionElements>
+        <camunda:connector>
+          <camunda:inputOutput>
+            <camunda:inputParameter name="payload">{"message": "Hypoglycemia!", "instanceID": "${execution.getProcessInstanceId()}" }</camunda:inputParameter>
+            <camunda:inputParameter name="method">POST</camunda:inputParameter>
+            <camunda:inputParameter name="headers">
+              <camunda:map>
+                <camunda:entry key="Content-Type">application/json</camunda:entry>
+              </camunda:map>
+            </camunda:inputParameter>
+            <camunda:inputParameter name="url">http://siddhi.local:8280/camundaStream</camunda:inputParameter>
+          </camunda:inputOutput>
+          <camunda:connectorId>http-connector</camunda:connectorId>
+        </camunda:connector>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_1dfb4me</bpmn:incoming>
+      <bpmn:outgoing>Flow_0rdpot9</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="Flow_1dfb4me" sourceRef="StartEvent_CGM_Hypo_Warning" targetRef="Activity_Send_Hypo" />
+    <bpmn:sequenceFlow id="Flow_0rdpot9" sourceRef="Activity_Send_Hypo" targetRef="Event_0fqjy0a" />
+    <bpmn:startEvent id="Event_0bmr6mz">
+      <bpmn:outgoing>Flow_1p6m6l8</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_0qivgoh" messageRef="Message_0k5qxh0" />
+    </bpmn:startEvent>
+    <bpmn:serviceTask id="Activity_Send_Hyper" name="Send Hyper">
+      <bpmn:extensionElements>
+        <camunda:connector>
+          <camunda:inputOutput>
+            <camunda:inputParameter name="payload">{"message": "Hyperglycemia!", "instanceID": "${execution.getProcessInstanceId()}" }</camunda:inputParameter>
+            <camunda:inputParameter name="method">POST</camunda:inputParameter>
+            <camunda:inputParameter name="headers">
+              <camunda:map>
+                <camunda:entry key="Content-Type">application/json</camunda:entry>
+              </camunda:map>
+            </camunda:inputParameter>
+            <camunda:inputParameter name="url">http://siddhi.local:8280/camundaStream</camunda:inputParameter>
+          </camunda:inputOutput>
+          <camunda:connectorId>http-connector</camunda:connectorId>
+        </camunda:connector>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_1p6m6l8</bpmn:incoming>
+      <bpmn:outgoing>Flow_0kf9wla</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="Flow_1p6m6l8" sourceRef="Event_0bmr6mz" targetRef="Activity_Send_Hyper" />
+    <bpmn:sequenceFlow id="Flow_0kf9wla" sourceRef="Activity_Send_Hyper" targetRef="Event_0fqjy0a" />
+    <bpmn:endEvent id="Event_0fqjy0a">
+      <bpmn:incoming>Flow_0rdpot9</bpmn:incoming>
+      <bpmn:incoming>Flow_0kf9wla</bpmn:incoming>
+    </bpmn:endEvent>
+  </bpmn:process>
+  <bpmn:message id="Message_03pheww" name="Message_Hypoglcemia" />
+  <bpmn:message id="Message_0k5qxh0" name="Message_Hyperglycemia" />
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_102azpx">
+      <bpmndi:BPMNShape id="Participant_1x3ozfp_di" bpmnElement="Participant_Hypoglycemia_Detected" isHorizontal="true">
+        <dc:Bounds x="160" y="52" width="640" height="638" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1dfb4me_di" bpmnElement="Flow_1dfb4me">
+        <di:waypoint x="258" y="177" />
+        <di:waypoint x="330" y="177" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0rdpot9_di" bpmnElement="Flow_0rdpot9">
+        <di:waypoint x="430" y="177" />
+        <di:waypoint x="551" y="177" />
+        <di:waypoint x="551" y="260" />
+        <di:waypoint x="602" y="260" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1p6m6l8_di" bpmnElement="Flow_1p6m6l8">
+        <di:waypoint x="258" y="330" />
+        <di:waypoint x="330" y="330" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0kf9wla_di" bpmnElement="Flow_0kf9wla">
+        <di:waypoint x="430" y="330" />
+        <di:waypoint x="551" y="330" />
+        <di:waypoint x="551" y="260" />
+        <di:waypoint x="602" y="260" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Event_0tnxl5x_di" bpmnElement="StartEvent_CGM_Hypo_Warning">
+        <dc:Bounds x="222" y="159" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="215" y="202" width="55" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1fmjef9_di" bpmnElement="Activity_Send_Hypo">
+        <dc:Bounds x="330" y="137" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_08r7mnb_di" bpmnElement="Event_0bmr6mz">
+        <dc:Bounds x="222" y="312" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1g3vvoq_di" bpmnElement="Activity_Send_Hyper">
+        <dc:Bounds x="330" y="290" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1nbbgdm_di" bpmnElement="Event_0fqjy0a">
+        <dc:Bounds x="602" y="242" width="36" height="36" />
+      </bpmndi:BPMNShape>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

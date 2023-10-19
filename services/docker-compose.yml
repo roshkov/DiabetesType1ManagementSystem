@@ -1,0 +1,61 @@
+version: "3.9"
+
+services:
+  siddhi:
+    networks:
+      devnet:
+        aliases:
+          - siddhi.local
+    hostname: siddhi.local
+
+  camunda:
+    networks: 
+      devnet:
+        aliases:
+          - camunda.local
+
+  postgres:
+    networks:
+      devnet:
+        aliases:
+          - postgres.local
+
+  external:
+    networks:
+      devnet:
+        aliases:
+          - external.local
+
+  # zeebe:
+  #   networks:
+  #     devnet:
+  #       aliases:
+  #         - zeebe.local
+  #   hostname: zeebe.local
+
+  # operate:
+  #   networks:
+  #     devnet:
+  #       aliases:
+  #         - operate.local
+  #   hostname: operate.local
+    
+
+  # tasklist:
+  #   networks:
+  #     devnet:
+  #       aliases:
+  #         - tasklist.local
+  #   hostname: tasklist.local
+
+  # elasticsearch:
+  #   networks:
+  #     devnet:
+  #       aliases:
+  #         - elasticsearch.local
+  #   hostname: elasticsearch.local
+
+networks:
+  devnet:
+    external:
+      name: devnet

@@ -1,0 +1,340 @@
+@App:name('default')
+@App:description('a collection point for shared streams')
+
+/*******************************************
+|                                           |
+|                                           |
+|             Global Streams                |
+|                                           |
+|                                           |
+********************************************/
+
+-- Receive Information to External (Doctor notification)
+@sink(type="log")
+@source(type='http', receiver.url='http://0.0.0.0:8280/camundaStream',@map(type='json'))
+define stream CamundaInputStream(patientId string, description string, processInstanceId string);
+
+@sink(type="inMemory", topic="camundaInputTopic", @map(type="passThrough"))
+define stream CamundaInputMemory(patientId string, description string, processInstanceId string);
+--
+
+-- Receive CGM Device Information
+--@sink(type='log')
+@source(type='http', receiver.url='http://0.0.0.0:8281/eventStream', @map(type='json'))
+define stream cgmDeviceStream (
+  patient string,
+  glucose double,
+  type string,
+  comments string
+);
+
+@sink(type="inMemory", topic="cgmDeviceTopic", @map(type="passThrough"))
+define stream cgmDeviceMemory (
+  patient string,
+  glucose double,
+  type string,
+  comments string
+);
+--
+
+-- Receive Information from External
+--@sink(type="log")
+@source(type='http', receiver.url='http://0.0.0.0:8283/external', @map(type='json'))
+define stream externalStream (
+  patientId string,
+  description string,
+  value string,
+  processInstanceId string
+);
+
+@sink(type="inMemory", topic="externalTopic", @map(type="passThrough"))
+define stream externalMemory (
+  patientId string,
+  description string,
+  value string,
+  processInstanceId string
+);
+
+--
+
+
+-- Send Information to External:Patient
+@sink(type='http',
+  publisher.url='http://external.local:80/external/patient/',
+  headers="'Host:external.local:80",
+  @map(type='json', 
+    @payload(
+      """
+      {
+        "patientId":"{{patientId}}",
+        "description":"{{description}}",
+        "processInstanceId":"{{processInstanceId}}"
+      }
+      """
+    )
+  )
+)
+define stream externalPatientSinkStream(patientId string, description string, processInstanceId string);
+
+-- Send Information to External:Doctor
+@sink(type='http',
+  publisher.url='http://external.local:80/external/doctor/',
+  headers="'Host:external.local:80",
+  @map(type='json', 
+    @payload(
+      """
+      {
+        "patientId":"{{patientId}}",
+        "description":"{{description}}",
+        "processInstanceId":"{{processInstanceId}}"
+      }
+      """
+    )
+  )
+)
+define stream externalDoctorSinkStream(patientId string, description string, processInstanceId string);
+
+--
+
+@source(type="inMemory", topic="externalDoctorTopic", @map(type="passThrough"))
+define stream externalDoctorSinkMemory(patientId string, description string, processInstanceId string);
+
+@source(type="inMemory", topic="externalPatientTopic", @map(type="passThrough"))
+define stream externalPatientSinkMemory(patientId string, description string, processInstanceId string);
+--
+
+
+
+-- Send Ketone Concentration
+@sink(type='log')
+@sink(type='http',
+  publisher.url='http://camunda.local:8080/engine-rest/message',
+  headers="'Host:camunda.local:8080",
+  @map(type='json', @payload(
+  """
+  {
+    "messageName":"{{message}}",
+    "processInstanceId":"{{processInstanceId}}",
+    "processVariables":
+    {
+      "ketoneConcentration":
+      {
+        "value":"{{ketoneConcentration}}",
+        "type":"Double"
+      },
+      "patient":
+      {
+        "value":"{{patient}}",
+        "type":"String"
+      }
+    }
+  }"""
+  )))
+define stream KetoneConcentrationStream(patient string, message string, ketoneConcentration double, processInstanceId string);
+
+--
+
+@source(type="inMemory", topic="ketoneConcentrationTopic", @map(type="passThrough"))
+define stream KetoneConcentrationMemory(patient string, message string, ketoneConcentration double, processInstanceId string);
+--
+
+-- Send a message with no process instance to camunda
+@sink(type='http',
+  publisher.url='http://camunda.local:8080/engine-rest/message',
+  headers="'Host:camunda.local:8080",
+  @map(type='json', @payload(
+  """
+  {
+    "messageName":"{{message}}",
+    "processVariables":
+    {
+      "glucose":
+      {
+        "value":"{{glucose}}",
+        "type":"Double"
+      },
+      "patient":
+      {
+        "value":"{{patient}}",
+        "type":"String"
+      }
+    }
+  }"""
+  )))
+define stream messageNoProcessStream(glucose double, message string, patient string);
+
+
+@source(type="inMemory", topic="messageNoProcessTopic", @map(type="passThrough"))
+define stream messageNoProcessMemory(glucose double, message string, patient string);
+--
+
+-- Updates instance in Camunda
+@sink(type='log')
+@sink(type='http',
+  publisher.url='http://camunda.local:8080/engine-rest/message',
+  headers="'Host:camunda.local:8080",
+  @map(type='json', @payload(
+  """
+  {
+    "messageName":"{{message}}",
+    "processInstanceId":"{{processInstanceId}}",
+  }"""
+  )))
+define stream messageWithProcessStream(message string, processInstanceId string);
+
+
+@source(type="inMemory", topic="messageWithProcessTopic", @map(type="passThrough"))
+define stream messageWithProcessMemory(message string, processInstanceId string);
+
+-- Updates glucose instance in Camunda
+@sink(type='log')
+@sink(type='http',
+  publisher.url='http://camunda.local:8080/engine-rest/message',
+  headers="'Host:camunda.local:8080",
+  @map(type='json', @payload(
+  """
+  {
+    "messageName":"{{message}}",
+    "processInstanceId":"{{processInstanceId}}",
+    "processVariables":
+    {
+      "glucose":
+      {
+        "value":"{{glucose}}",
+        "type":"Double"
+      }
+    }
+  }
+  """
+  )))
+define stream updateGlucoseMessageStream(message string, processInstanceId string, glucose double);
+
+@sink(type='log')
+@source(type="inMemory", topic="updateGlucoseMessageTopic", @map(type="passThrough"))
+define stream updateGlucoseMessageMemory(message string, processInstanceId string, glucose double);
+
+define stream unfilteredStream(
+  patient string,
+  glucose double,
+  type string,
+  comments string
+);
+--
+
+-- Trend Stream
+--@sink(type='log')
+@sink(type="inMemory", topic="trendTopic", @map(type="passThrough"))
+define stream trendStream (
+  patient string,
+  trend string,
+  avgGlucose double,
+  startEndGlucoseChange double,
+  currentGlucoseLevel double
+);
+--
+
+-- create a window for receiving events and only keep 1 of each patient id in the window
+define window patientoutputwindow (patientid string, description string, processinstanceid string) unique:time(patientid, 5 sec);
+--
+
+
+/*******************************************
+|                                           |
+|                                           |
+|             Logic?????????                |
+|                                           |
+|                                           |
+********************************************/
+
+-- Forward messageNoProcess.
+from messageNoProcessMemory
+insert into messageNoProcessStream;
+--
+
+-- Forward messageWithProcess.
+from messageWithProcessMemory
+insert into messageWithProcessStream;
+--
+
+-- Forward ketone concentration stream.
+from KetoneConcentrationMemory
+insert into KetoneConcentrationStream;
+--
+
+-- externalPatientMemory
+from externalPatientSinkMemory
+insert into externalPatientSinkStream;
+--
+
+-- Forward externalDoctorMemory
+from externalDoctorSinkMemory
+insert into externalDoctorSinkStream;
+--
+
+-- Forward externalStream to Memory
+from externalStream
+insert into externalMemory;
+--
+
+-- Forward CamundaInput to Memory
+from CamundaInputStream
+insert into CamundaInputMemory;
+--
+-- Forward externalStream to Memory
+from cgmDeviceStream
+insert into cgmDeviceMemory;
+--
+
+-- Forward updateGlucoseMessageStream to Memory
+/*from updateGlucoseMessageStream
+insert into updateGlucoseMessageMemory;*/
+from updateGlucoseMessageMemory
+insert into updateGlucoseMessageStream;
+--
+
+
+-- Send to Unfiltered if patient information is not being forwarded
+from cgmDeviceStream as c left outer join externalStream#window.unique:time(patientId, 5 sec) as p
+  on c.patient == p.patientId
+select c.patient as patient, c.glucose, c.type, c.comments
+having p.processInstanceId is null
+insert into unfilteredStream;
+--
+
+
+-- Identifies 3 rising or falling cgm events.
+--from cgmDeviceStream
+--insert into unfilteredStream;
+partition with (patient of unfilteredStream)
+begin
+  from every e1=unfilteredStream ->
+             e2=unfilteredStream ->
+             e3=unfilteredStream[glucose - e1.glucose >= 0.05]
+  select e1.patient as patient, "rising" as trend,
+    ((e1.glucose + e2.glucose + e3.glucose) / 3) as avgGlucose,
+    (e3.glucose - e1.glucose) as startEndGlucoseChange,
+    --e1[last].glucose - e1[0].glucose as startEndGlucoseChange,
+    e3.glucose as currentGlucoseLevel
+  insert into trendStream;
+
+  from every e1=unfilteredStream ->
+             e2=unfilteredStream ->
+             e3=unfilteredStream[glucose - e1.glucose <= -0.05]
+  select e1.patient as patient, "falling" as trend,
+    ((e1.glucose + e2.glucose + e3.glucose) / 3) as avgGlucose,
+    (e3.glucose - e1.glucose) as startEndGlucoseChange,
+    --e1[last].glucose - e1[0].glucose as startEndGlucoseChange,
+    e3.glucose as currentGlucoseLevel
+  insert into trendStream;
+
+  from every e1=unfilteredStream ->
+             e2=unfilteredStream ->
+             e3=unfilteredStream[math:abs(glucose - e1.glucose) <= 0.05]
+  select e1.patient as patient, "constant" as trend,
+    ((e1.glucose + e2.glucose + e3.glucose) / 3) as avgGlucose,
+    (e3.glucose - e1.glucose) as startEndGlucoseChange,
+    --e1[last].glucose - e1[0].glucose as startEndGlucoseChange,
+    e1.glucose as currentGlucoseLevel
+  insert into trendStream;
+end;
+--

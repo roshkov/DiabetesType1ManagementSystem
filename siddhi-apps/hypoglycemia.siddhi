@@ -1,0 +1,76 @@
+@App:name('hypoglycemia')
+@App:description('hypoglycemia')
+
+
+--- Streams ---
+
+@source(type="inMemory", topic="trendTopic", @map(type="passThrough"))
+define stream trendStream (
+  patient string,
+  trend string,
+  avgGlucose double,
+  startEndGlucoseChange double,
+  currentGlucoseLevel double
+);
+
+-- Send into external patient sink
+@sink(type='inMemory', topic="externalPatientTopic", @map(type="passThrough"))
+define stream externalPatientSinkStream(patientId string, description string, processInstanceId string);
+
+-- Send into external doctor sink
+@sink(type='inMemory', topic="externalDoctorTopic", @map(type="passThrough"))
+define stream externalDoctorSinkStream(patientId string, description string, processInstanceId string);
+
+@sink(type="inMemory", topic="messageNoProcessTopic", @map(type="passThrough"))
+define stream messageNoProcessStream(glucose double, message string, patient string);
+
+@sink(type="inMemory", topic="messageWithProcessTopic", @map(type="passThrough"))
+define stream messageWithProcessStream(message string, processInstanceId string);
+
+-- Receive Camunda Messages
+@source(type='inMemory', topic="camundaInputTopic", @map(type="passThrough"))
+define stream CamundaInputStream(patientId string, description string, processInstanceId string);
+--
+--@sink(type="log")
+@source(type="inMemory", topic="externalTopic", @map(type="passThrough"))
+define stream externalStream (
+  patientId string,
+  description string,
+  value string,
+  processInstanceId string
+);
+
+---  Logic  ---
+
+-- Sends a message after identification of Hypoglycemia.
+from every e1=trendStream[(currentGlucoseLevel < 5.0 and trend == 'falling') or avgGlucose <= 4.0]
+select ifThenElse(e1.currentGlucoseLevel < 5.0 and e1.trend == 'failing', e1.currentGlucoseLevel, e1.avgGlucose) as glucose,
+      "Message_Hypoglycemia" as message, 
+      e1.patient as patient
+insert into messageNoProcessStream;
+--
+
+-- Forward messages from Camunda to API (patient)
+from CamundaInputStream[description == 'Eat Food Notification']
+select patientId, description, processInstanceId
+insert into externalPatientSinkStream;
+
+-- Forward response from API to Camunda
+from externalStream[description == 'Message_Hypoglycemia_Food_Eaten']
+select description as message, processInstanceId
+insert into messageWithProcessStream;
+
+-- Forward messages from Camunda to API (patient)
+from CamundaInputStream[description == 'Inject Glucagon Notification']
+select patientId, description, processInstanceId
+insert into externalPatientSinkStream;
+
+-- Forward response from API to Camunda
+from externalStream[description == 'Message_Hypoglycemia_Glucagon_Injected']
+select description as message, processInstanceId
+insert into messageWithProcessStream;
+
+-- Forward messages from Camunda to API (doctor)
+from CamundaInputStream[description == 'Hypoglycemia Notifying Medical Expert']
+select patientId, description, processInstanceId
+insert into externalDoctorSinkStream;

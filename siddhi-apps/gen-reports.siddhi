@@ -1,0 +1,70 @@
+@App:name('gen-reports')
+@App:description('associated with gen-reports')
+
+-- STREAMS
+
+@source(type='inMemory', topic="cgmDeviceTopic", @map(type="passThrough"))
+define stream cgmDeviceStream (
+  patient string,
+  glucose double,
+  type string,
+  comments string
+);
+
+-- Send into external patient sink
+@sink(type='inMemory', topic="externalPatientTopic", @map(type="passThrough"))
+define stream externalPatientSinkStream(patientId string, description string, processInstanceId string);
+
+-- Receive Camunda Messages
+@source(type='inMemory', topic="camundaInputTopic", @map(type="passThrough"))
+define stream CamundaInputStream(patientId string, description string, processInstanceId string);
+
+@sink(type='http',
+  publisher.url='http://camunda.local:8080/engine-rest/message',
+  headers="'Host:camunda.local:8080",
+  @map(type='json', @payload(
+  """
+  {
+    "messageName": "{{message}}",
+    "processVariables": {
+      "glucose": {
+        "value": "{{glucoseList}}",
+        "type": "Object",
+        "valueInfo": {
+          "objectTypeName": "java.util.ArrayList",
+          "serializationDataFormat": "application/json"
+        }
+      },
+      "patient": {
+        "value": "{{patient}}",
+        "type": "String"
+      }
+    }
+  }"""
+  )))
+@sink(type='log')
+define stream ReportMessageStream(message string, glucoseList object, patient string);
+
+
+
+--
+
+-- LOGIC
+
+partition with (patient of cgmDeviceStream)
+begin
+  from cgmDeviceStream#window.timeBatch(30 sec)
+  select "Message_Generate_Monthly_Report" as message, list:collect(glucose) as glucoseList, patient
+  insert into ReportMessageStream;
+end;
+
+
+from CamundaInputStream[description == 'Notify patient about monthly report']
+select patientId, description, processInstanceId
+insert into externalPatientSinkStream;
+
+from CamundaInputStream[description == 'Notify Patient Without Priority']
+select patientId, description, processInstanceId
+insert into externalPatientSinkStream;
+
+--

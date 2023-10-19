@@ -1,0 +1,258 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="4.12.0" camunda:diagramRelationId="36cf35aa-306d-43b5-a5d2-298b2baa2669">
+  <bpmn:collaboration id="Glucose-Pattern-Analysis">
+    <bpmn:participant id="Participant_1m2yws8" name="" processRef="Process_3a309990-3693-4e3a-a341-b77438e8a685" />
+  </bpmn:collaboration>
+  <bpmn:process id="Process_3a309990-3693-4e3a-a341-b77438e8a685" name="Glucose Pattern Report Generating" isExecutable="true">
+    <bpmn:laneSet id="LaneSet_0d0faxz">
+      <bpmn:lane id="Lane_1idcmch" name="Consultant Doctor">
+        <bpmn:flowNodeRef>Activity_0pthtkd</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_04tb2ai</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Event_1f20n0j</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_0nduw3l</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_18vb5fq</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_0aj88l0</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Event_0cs8b23</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_0ch2kjq" name="Processing Engine">
+        <bpmn:flowNodeRef>Activity_1rc64w2</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_1tv8vl6</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>StartEvent_1</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Event_0zgww30</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+    <bpmn:dataStoreReference id="DataStoreReference_0jevhti" name="Report database" />
+    <bpmn:serviceTask id="Activity_1rc64w2" name="Store log of report and evaluation" camunda:type="external" camunda:topic="logReport">
+      <bpmn:incoming>Flow_1rfzr9x</bpmn:incoming>
+      <bpmn:outgoing>Flow_0rkt2p9</bpmn:outgoing>
+      <bpmn:dataOutputAssociation id="DataOutputAssociation_0q4f4lz">
+        <bpmn:targetRef>DataStoreReference_0jevhti</bpmn:targetRef>
+      </bpmn:dataOutputAssociation>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="Activity_1tv8vl6" name="Generate monthly report" camunda:type="external" camunda:topic="generateReport">
+      <bpmn:incoming>Flow_0bsap4w</bpmn:incoming>
+      <bpmn:outgoing>Flow_00irels</bpmn:outgoing>
+      <bpmn:property id="Property_10y2bbq" name="__targetRef_placeholder" />
+      <bpmn:dataInputAssociation id="DataInputAssociation_1jm1muj">
+        <bpmn:sourceRef>DataStoreReference_1beu2mr</bpmn:sourceRef>
+        <bpmn:targetRef>Property_10y2bbq</bpmn:targetRef>
+      </bpmn:dataInputAssociation>
+    </bpmn:serviceTask>
+    <bpmn:dataStoreReference id="DataStoreReference_1beu2mr" name="Patients Glucose Log" />
+    <bpmn:startEvent id="StartEvent_1" name="Monthly">
+      <bpmn:outgoing>Flow_0bsap4w</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_0ku8dz0" messageRef="Message_1nzma5w" />
+    </bpmn:startEvent>
+    <bpmn:serviceTask id="Activity_0pthtkd" name="Notify Patient without prioirty">
+      <bpmn:extensionElements>
+        <camunda:connector>
+          <camunda:inputOutput>
+            <camunda:inputParameter name="payload">{"patientId":"${patient}", "description":"Notify Patient Without Priority", "processInstanceId":"${execution.getProcessInstanceId()}"}</camunda:inputParameter>
+            <camunda:inputParameter name="method">POST</camunda:inputParameter>
+            <camunda:inputParameter name="url">http://siddhi.local:8280/camundaStream</camunda:inputParameter>
+            <camunda:inputParameter name="headers">
+              <camunda:map>
+                <camunda:entry key="content-type">application/json</camunda:entry>
+              </camunda:map>
+            </camunda:inputParameter>
+          </camunda:inputOutput>
+          <camunda:connectorId>http-connector</camunda:connectorId>
+        </camunda:connector>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_1kh3sa4</bpmn:incoming>
+      <bpmn:outgoing>Flow_1kqn9po</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="Activity_04tb2ai" name="Notify Patient with priority">
+      <bpmn:extensionElements>
+        <camunda:connector>
+          <camunda:inputOutput>
+            <camunda:inputParameter name="payload">{"patientId":"${patient}", "description":"Notify patient about monthly report", "processInstanceId":"${execution.getProcessInstanceId()}"}</camunda:inputParameter>
+            <camunda:inputParameter name="method">POST</camunda:inputParameter>
+            <camunda:inputParameter name="headers">
+              <camunda:map>
+                <camunda:entry key="content-type">application/json</camunda:entry>
+              </camunda:map>
+            </camunda:inputParameter>
+            <camunda:inputParameter name="url">http://siddhi.local:8280/camundaStream</camunda:inputParameter>
+          </camunda:inputOutput>
+          <camunda:connectorId>http-connector</camunda:connectorId>
+        </camunda:connector>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_01wvk0m</bpmn:incoming>
+      <bpmn:outgoing>Flow_1r7f213</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:endEvent id="Event_1f20n0j">
+      <bpmn:incoming>Flow_1kqn9po</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:userTask id="Activity_0nduw3l" name="Analyse monthly glucose report">
+      <bpmn:extensionElements>
+        <camunda:formData>
+          <camunda:formField id="CriticalReport" label="Is this report a cause for concern?" type="boolean" />
+        </camunda:formData>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_00irels</bpmn:incoming>
+      <bpmn:outgoing>Flow_1l72y2j</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:parallelGateway id="Gateway_18vb5fq">
+      <bpmn:incoming>Flow_1l72y2j</bpmn:incoming>
+      <bpmn:outgoing>Flow_0si3efl</bpmn:outgoing>
+      <bpmn:outgoing>Flow_1rfzr9x</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    <bpmn:exclusiveGateway id="Gateway_0aj88l0">
+      <bpmn:incoming>Flow_0si3efl</bpmn:incoming>
+      <bpmn:outgoing>Flow_01wvk0m</bpmn:outgoing>
+      <bpmn:outgoing>Flow_1kh3sa4</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:endEvent id="Event_0cs8b23">
+      <bpmn:incoming>Flow_1r7f213</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:endEvent id="Event_0zgww30">
+      <bpmn:incoming>Flow_0rkt2p9</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_0bsap4w" sourceRef="StartEvent_1" targetRef="Activity_1tv8vl6" />
+    <bpmn:sequenceFlow id="Flow_00irels" sourceRef="Activity_1tv8vl6" targetRef="Activity_0nduw3l" />
+    <bpmn:sequenceFlow id="Flow_1l72y2j" sourceRef="Activity_0nduw3l" targetRef="Gateway_18vb5fq" />
+    <bpmn:sequenceFlow id="Flow_01wvk0m" name="is cause for concern" sourceRef="Gateway_0aj88l0" targetRef="Activity_04tb2ai">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${CriticalReport==true}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_1kh3sa4" name="is not cause for concern" sourceRef="Gateway_0aj88l0" targetRef="Activity_0pthtkd">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${CriticalReport== false}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_1kqn9po" sourceRef="Activity_0pthtkd" targetRef="Event_1f20n0j" />
+    <bpmn:sequenceFlow id="Flow_0si3efl" sourceRef="Gateway_18vb5fq" targetRef="Gateway_0aj88l0" />
+    <bpmn:sequenceFlow id="Flow_1rfzr9x" sourceRef="Gateway_18vb5fq" targetRef="Activity_1rc64w2" />
+    <bpmn:sequenceFlow id="Flow_1r7f213" sourceRef="Activity_04tb2ai" targetRef="Event_0cs8b23" />
+    <bpmn:sequenceFlow id="Flow_0rkt2p9" sourceRef="Activity_1rc64w2" targetRef="Event_0zgww30" />
+    <bpmn:textAnnotation id="TextAnnotation_11u0rxm">
+      <bpmn:text>Determine if report is cause for concern</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Association_0udtw8q" sourceRef="Gateway_0aj88l0" targetRef="TextAnnotation_11u0rxm" />
+  </bpmn:process>
+  <bpmn:message id="Message_0uyl9st" name="Message_Notify_Patient" />
+  <bpmn:message id="Message_1nzma5w" name="Message_Generate_Monthly_Report" />
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Glucose-Pattern-Analysis">
+      <bpmndi:BPMNShape id="Participant_1m2yws8_di" bpmnElement="Participant_1m2yws8" isHorizontal="true">
+        <dc:Bounds x="160" y="80" width="1210" height="520" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_0ch2kjq_di" bpmnElement="Lane_0ch2kjq" isHorizontal="true">
+        <dc:Bounds x="190" y="80" width="1180" height="240" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_1idcmch_di" bpmnElement="Lane_1idcmch" isHorizontal="true">
+        <dc:Bounds x="190" y="320" width="1180" height="280" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_0rkt2p9_di" bpmnElement="Flow_0rkt2p9">
+        <di:waypoint x="720" y="240" />
+        <di:waypoint x="772" y="240" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1r7f213_di" bpmnElement="Flow_1r7f213">
+        <di:waypoint x="1030" y="430" />
+        <di:waypoint x="1082" y="430" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1rfzr9x_di" bpmnElement="Flow_1rfzr9x">
+        <di:waypoint x="670" y="455" />
+        <di:waypoint x="670" y="280" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0si3efl_di" bpmnElement="Flow_0si3efl">
+        <di:waypoint x="695" y="480" />
+        <di:waypoint x="795" y="480" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1kqn9po_di" bpmnElement="Flow_1kqn9po">
+        <di:waypoint x="1030" y="530" />
+        <di:waypoint x="1082" y="530" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1kh3sa4_di" bpmnElement="Flow_1kh3sa4">
+        <di:waypoint x="820" y="505" />
+        <di:waypoint x="820" y="530" />
+        <di:waypoint x="930" y="530" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="814" y="536" width="75" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_01wvk0m_di" bpmnElement="Flow_01wvk0m">
+        <di:waypoint x="820" y="455" />
+        <di:waypoint x="820" y="430" />
+        <di:waypoint x="930" y="430" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="823" y="396" width="57" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1l72y2j_di" bpmnElement="Flow_1l72y2j">
+        <di:waypoint x="570" y="480" />
+        <di:waypoint x="645" y="480" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_00irels_di" bpmnElement="Flow_00irels">
+        <di:waypoint x="400" y="280" />
+        <di:waypoint x="400" y="480" />
+        <di:waypoint x="470" y="480" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0bsap4w_di" bpmnElement="Flow_0bsap4w">
+        <di:waypoint x="268" y="240" />
+        <di:waypoint x="350" y="240" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="DataStoreReference_0jevhti_di" bpmnElement="DataStoreReference_0jevhti">
+        <dc:Bounds x="645" y="125" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="704" y="143" width="82" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0eom77l_di" bpmnElement="Activity_1rc64w2">
+        <dc:Bounds x="620" y="200" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_02gp5ln_di" bpmnElement="Activity_1tv8vl6">
+        <dc:Bounds x="350" y="200" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DataStoreReference_1beu2mr_di" bpmnElement="DataStoreReference_1beu2mr">
+        <dc:Bounds x="375" y="125" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="288" y="146" width="84" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1auf6pc_di" bpmnElement="StartEvent_1">
+        <dc:Bounds x="232" y="222" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="231" y="263" width="40" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1pg70gg_di" bpmnElement="Activity_0pthtkd">
+        <dc:Bounds x="930" y="490" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1ymp42i_di" bpmnElement="Activity_04tb2ai">
+        <dc:Bounds x="930" y="390" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1f20n0j_di" bpmnElement="Event_1f20n0j">
+        <dc:Bounds x="1082" y="512" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_15ouwjh_di" bpmnElement="Activity_0nduw3l">
+        <dc:Bounds x="470" y="440" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_1rxv1rj_di" bpmnElement="Gateway_18vb5fq">
+        <dc:Bounds x="645" y="455" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_0aj88l0_di" bpmnElement="Gateway_0aj88l0" isMarkerVisible="true">
+        <dc:Bounds x="795" y="455" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0x6kzx3_di" bpmnElement="Event_0cs8b23">
+        <dc:Bounds x="1082" y="412" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0zgww30_di" bpmnElement="Event_0zgww30">
+        <dc:Bounds x="772" y="222" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="TextAnnotation_11u0rxm_di" bpmnElement="TextAnnotation_11u0rxm">
+        <dc:Bounds x="710" y="390" width="100" height="55" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Association_0udtw8q_di" bpmnElement="Association_0udtw8q">
+        <di:waypoint x="808" y="467" />
+        <di:waypoint x="786" y="445" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DataOutputAssociation_0q4f4lz_di" bpmnElement="DataOutputAssociation_0q4f4lz">
+        <di:waypoint x="670" y="200" />
+        <di:waypoint x="670" y="175" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DataInputAssociation_1jm1muj_di" bpmnElement="DataInputAssociation_1jm1muj">
+        <di:waypoint x="400" y="175" />
+        <di:waypoint x="400" y="200" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

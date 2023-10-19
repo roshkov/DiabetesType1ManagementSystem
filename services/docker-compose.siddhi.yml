@@ -1,0 +1,19 @@
+version: "3.9"
+
+services:
+  siddhi:
+    image: siddhiio/siddhi-runner-ubuntu:latest
+    # build:
+    #   context: .
+    #   dockerfile: siddhi.Dockerfile
+    volumes:
+      - $LOCAL_WORKSPACE_FOLDER/siddhi-apps:/apps
+      # - $LOCAL_WORKSPACE_FOLDER/patients/009/2014_10_02-06_14_52_ECG.csv:/workspace/2014_10_02-06_14_52_ECG.csv
+    # networks: 
+    #   - devnet
+    ports:
+      - "8280:8280"
+      - "8281:8281"
+      - "8283:8283"
+    hostname: siddhi.local
+    command: -Dapps=/apps

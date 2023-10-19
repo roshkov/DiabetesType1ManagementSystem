@@ -1,0 +1,119 @@
+@App:name('CamundaStream')
+@App:description('Desc')
+
+@source(type='http', receiver.url='http://0.0.0.0:8280/camundaStream',@map(type='json'))
+@sink(type='log')
+define stream CamundaInputStream(amount int, instanceID string);
+
+@sink(type='grpc', publisher.url = 'grpc://zeebe.local:26500/org.wso2.grpc.EventService/consume', 
+@map(type='json')) 
+define stream FooStream (message String);
+
+@sink(type='http',
+  publisher.url='http://camunda.local:8080/engine-rest/message',
+  headers="'Host:camunda.local:8080",
+  @map(type='json', @payload("""{"messageName":"{{messageName}}","processInstanceID":"{{processInstanceID}}"}""")))
+define stream MessageStream(processInstanceID string, messageName string);
+
+@source(type = 'file',
+  mode = "line",
+  tailing = "false",
+  file.uri = "file:/workspace/HDeviceCGM.txt",
+  action.after.process = "NONE",
+  file.polling.interval = "5000",
+  @map(type = 'csv',
+    header = "true",
+    delimiter = "|",
+    @attributes(
+      recId = "0",
+      parentHDeviceUploadsId = "1",
+      ptId = "2",
+      siteId = "3",
+      deviceDtTmDaysFromEnroll = "4",
+      deviceTm = "5",
+      dexInternalDtTmDaysFromEnroll = "6",
+      dexInternalTm = "7",
+      recordType = "8",
+      glucoseValue = "9"
+    )
+  )
+)
+define stream cgmDevicestream (
+  recId int,
+  parentHDeviceUploadsId int,
+  ptId int,
+  siteId int, 
+  deviceDtTmDaysFromEnroll int,
+  deviceTm string,
+  dexInternalDtTmDaysFromEnroll int,
+  dexInternalTm string,
+  recordType string,
+  glucoseValue double
+);
+
+@info(name = 'hypoglycemia') from cgmDevicestream[glucoseValue <= 70.0] select glucoseValue, ptId, deviceTm insert into outputStream;
+@info(name = 'hyperglycemia') from cgmDevicestream[glucoseValue >= 120.0 and glucoseValue < 250.0] select glucoseValue, ptId, deviceTm insert into outputStream;
+@info(name = 'ketoacidosis') from cgmDevicestream[glucoseValue >= 250.0] select glucoseValue, ptId, deviceTm insert into outputStream;
+
+
+from CamundaInputStream[amount > 10]
+select instanceID as processInstanceID, 'msg1' as messageName
+insert into MessageStream;
+
+from CamundaInputStream[amount <= 10]
+select instanceID as processInstanceID, 'msg2' as messageName
+insert into MessageStream;
+
+
+
+
+#######
+
+@sink(type='http',
+  publisher.url='http://camunda.local:8080/engine-rest/message',
+  headers="Host:camunda.local:8080",
+  @map(type='json', @payload("""{"messageName":"{{messageName}}","glucoseValue":"{{glucoseValue}}"}""")))
+define stream MessageStream(glucoseValue float, messageName string);
+
+@source(type='http', receiver.url='http://0.0.0.0:8281/eventStream', @map(type='json'))
+define stream cgmDeviceStream (
+  recId int,
+  parentHDeviceUploadsId int,
+  ptId int,
+  siteId int, 
+  deviceDtTmDaysFromEnroll int,
+  deviceTm string,
+  dexInternalDtTmDaysFromEnroll int,
+  dexInternalTm string,
+  recordType string,
+  glucoseValue float
+);
+
+@info(type='log') from cgmDeviceStream[glucoseValue <= 70.0]
+select glucoseValue, 'Message_Hypoglcemia' as messageName
+insert into outputStream;
+
+from cgmDeviceStream[glucoseValue <= 70.0]
+select glucoseValue, 'Message_Hypoglcemia' as messageName
+insert into MessageStream;
+
+@info(type='log') from cgmDeviceStream[glucoseValue >= 120.0]
+select glucoseValue, 'Message_Hyperglycemia' as messageName
+insert into outputStream;
+
+from cgmDeviceStream[glucoseValue >= 120.0]
+select glucoseValue, 'Message_Hyperglycemia' as messageName
+insert into MessageStream;
+
+@sink(type='grpc', publisher.url = 'grpc://zeebe.local:26500/io.siddhi.grpc.EventService/consume', 
+  @map(type='json')) 
+define stream FooStream (message String);
+
+
+@sink(type='grpc', publisher.url = 'grpc://zeebe.local:26500/org.wso2.grpc.EventService/consume', 
+  @map(type='json')) 
+define stream outputStream(
+  glucose float,
+  message string,
+  patient string
+);

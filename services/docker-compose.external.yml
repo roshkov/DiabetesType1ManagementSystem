@@ -1,0 +1,12 @@
+version: "3.9"
+
+services:
+  external:
+    build:
+      context: .
+      dockerfile: external.Dockerfile
+    networks: 
+      - devnet
+    ports:
+      - "5000:80"
+    hostname: external.local

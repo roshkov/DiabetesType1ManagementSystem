@@ -1,0 +1,4 @@
+CourseDocs/
+*.pyc
+.env
+pkg/

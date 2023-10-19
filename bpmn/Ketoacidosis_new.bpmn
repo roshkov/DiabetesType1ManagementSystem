@@ -1,0 +1,458 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="4.12.0" camunda:diagramRelationId="e0268d27-a557-47e5-a335-7cf2d88f8cee">
+  <bpmn:process id="Process_Ketoacidosis" name="Ketoacidosis" isExecutable="true">
+    <bpmn:extensionElements />
+    <bpmn:sequenceFlow id="Flow_04vih3a" sourceRef="Event_0ckmejr" targetRef="Activity_Notify_Ketoacidosis_Evaluation" />
+    <bpmn:exclusiveGateway id="Gateway_0hat2w4">
+      <bpmn:incoming>Flow_13ahagx</bpmn:incoming>
+      <bpmn:outgoing>Flow_0jpxiqy</bpmn:outgoing>
+      <bpmn:outgoing>Flow_1qm69m5</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:exclusiveGateway id="Gateway_095z0hb">
+      <bpmn:incoming>Flow_0jpxiqy</bpmn:incoming>
+      <bpmn:incoming>Flow_1m6txv3</bpmn:incoming>
+      <bpmn:incoming>Flow_0ahgtpe</bpmn:incoming>
+      <bpmn:incoming>Flow_0ix355m</bpmn:incoming>
+      <bpmn:outgoing>Flow_05p9rx6</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="Flow_0jpxiqy" name="False" sourceRef="Gateway_0hat2w4" targetRef="Gateway_095z0hb">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${risk == 'False'}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_11f1k2m" sourceRef="Activity_15z0j1a" targetRef="Gateway_1faou3n" />
+    <bpmn:eventBasedGateway id="Gateway_1faou3n">
+      <bpmn:incoming>Flow_11f1k2m</bpmn:incoming>
+      <bpmn:outgoing>Flow_03os2n2</bpmn:outgoing>
+      <bpmn:outgoing>Flow_1p3udih</bpmn:outgoing>
+    </bpmn:eventBasedGateway>
+    <bpmn:intermediateCatchEvent id="Event_16nzx9z" name="ketone concentration level received">
+      <bpmn:incoming>Flow_03os2n2</bpmn:incoming>
+      <bpmn:outgoing>Flow_1q058ya</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_0zmbyqw" messageRef="Message_09nn2no" />
+    </bpmn:intermediateCatchEvent>
+    <bpmn:sequenceFlow id="Flow_03os2n2" sourceRef="Gateway_1faou3n" targetRef="Event_16nzx9z" />
+    <bpmn:exclusiveGateway id="Gateway_1mxd8w3">
+      <bpmn:incoming>Flow_1q058ya</bpmn:incoming>
+      <bpmn:outgoing>Flow_1m6txv3</bpmn:outgoing>
+      <bpmn:outgoing>Flow_0fg5cry</bpmn:outgoing>
+      <bpmn:outgoing>Flow_1wzox4p</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="Flow_1q058ya" sourceRef="Event_16nzx9z" targetRef="Gateway_1mxd8w3" />
+    <bpmn:sequenceFlow id="Flow_1m6txv3" name="low" sourceRef="Gateway_1mxd8w3" targetRef="Gateway_095z0hb">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${ketoneConcentration &lt;= 3}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_0fg5cry" name="moderate" sourceRef="Gateway_1mxd8w3" targetRef="Event_0nx76uk">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${ketoneConcentration &gt; 3 and ketoneConcentration &lt; 7}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:intermediateCatchEvent id="Event_0nx76uk" name="60 min">
+      <bpmn:incoming>Flow_0fg5cry</bpmn:incoming>
+      <bpmn:outgoing>Flow_0iomzns</bpmn:outgoing>
+      <bpmn:timerEventDefinition id="TimerEventDefinition_0a5ckfg">
+        <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT60M</bpmn:timeDuration>
+      </bpmn:timerEventDefinition>
+    </bpmn:intermediateCatchEvent>
+    <bpmn:serviceTask id="Activity_Notify_Ketoacidosis_Evaluation" name="Notify user to evaluate ketoacidosis risk">
+      <bpmn:extensionElements>
+        <camunda:connector>
+          <camunda:inputOutput>
+            <camunda:inputParameter name="payload">{"patientId":"${patient}", "description":"Evaluate Ketoacidosis Level", "processInstanceId":"${execution.getProcessInstanceId()}"}</camunda:inputParameter>
+            <camunda:inputParameter name="method">POST</camunda:inputParameter>
+            <camunda:inputParameter name="headers">
+              <camunda:map>
+                <camunda:entry key="content-type">application/json</camunda:entry>
+              </camunda:map>
+            </camunda:inputParameter>
+            <camunda:inputParameter name="url">http://siddhi.local:8280/camundaStream</camunda:inputParameter>
+          </camunda:inputOutput>
+          <camunda:connectorId>http-connector</camunda:connectorId>
+        </camunda:connector>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_04vih3a</bpmn:incoming>
+      <bpmn:outgoing>Flow_1pilp3l</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="Flow_1pilp3l" sourceRef="Activity_Notify_Ketoacidosis_Evaluation" targetRef="Gateway_0q72ho3" />
+    <bpmn:eventBasedGateway id="Gateway_0q72ho3">
+      <bpmn:incoming>Flow_1pilp3l</bpmn:incoming>
+      <bpmn:outgoing>Flow_0txc5po</bpmn:outgoing>
+      <bpmn:outgoing>Flow_1x9yifs</bpmn:outgoing>
+    </bpmn:eventBasedGateway>
+    <bpmn:intermediateCatchEvent id="Event_riskEvaluationReceived">
+      <bpmn:extensionElements />
+      <bpmn:incoming>Flow_0txc5po</bpmn:incoming>
+      <bpmn:outgoing>Flow_13ahagx</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_1f7d4gr" messageRef="Message_19k4rwo" />
+    </bpmn:intermediateCatchEvent>
+    <bpmn:sequenceFlow id="Flow_0txc5po" sourceRef="Gateway_0q72ho3" targetRef="Event_riskEvaluationReceived" />
+    <bpmn:intermediateCatchEvent id="Event_1glr51j" name="15 min">
+      <bpmn:incoming>Flow_1x9yifs</bpmn:incoming>
+      <bpmn:outgoing>Flow_1rlynzr</bpmn:outgoing>
+      <bpmn:timerEventDefinition id="TimerEventDefinition_1qrzh77">
+        <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT15M</bpmn:timeDuration>
+      </bpmn:timerEventDefinition>
+    </bpmn:intermediateCatchEvent>
+    <bpmn:sequenceFlow id="Flow_1x9yifs" sourceRef="Gateway_0q72ho3" targetRef="Event_1glr51j" />
+    <bpmn:serviceTask id="Activity_15z0j1a" name="Notify user to measure ketone concentration">
+      <bpmn:extensionElements>
+        <camunda:connector>
+          <camunda:inputOutput>
+            <camunda:inputParameter name="headers">
+              <camunda:map>
+                <camunda:entry key="content-type">application/json</camunda:entry>
+              </camunda:map>
+            </camunda:inputParameter>
+            <camunda:inputParameter name="method">POST</camunda:inputParameter>
+            <camunda:inputParameter name="payload">{"patientId":"${patient}", "description":"Measure Ketone Concentration", "processInstanceId":"${execution.getProcessInstanceId()}"}</camunda:inputParameter>
+            <camunda:inputParameter name="url">http://siddhi.local:8280/camundaStream</camunda:inputParameter>
+          </camunda:inputOutput>
+          <camunda:connectorId>http-connector</camunda:connectorId>
+        </camunda:connector>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0hjmwiv</bpmn:incoming>
+      <bpmn:outgoing>Flow_11f1k2m</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="Activity_0whrgxl" name="Notify patient&#39;s doctor about high ketone measurement">
+      <bpmn:extensionElements>
+        <camunda:connector>
+          <camunda:inputOutput>
+            <camunda:inputParameter name="payload">{"patientId":"${patient}", "description":"High ketone measurement doctor notification", "processInstanceId":"${execution.getProcessInstanceId()}"}</camunda:inputParameter>
+            <camunda:inputParameter name="headers">
+              <camunda:map>
+                <camunda:entry key="content-type">application/json</camunda:entry>
+              </camunda:map>
+            </camunda:inputParameter>
+            <camunda:inputParameter name="method">POST</camunda:inputParameter>
+            <camunda:inputParameter name="url">http://siddhi.local:8280/camundaStream</camunda:inputParameter>
+          </camunda:inputOutput>
+          <camunda:connectorId>http-connector</camunda:connectorId>
+        </camunda:connector>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_1jcjzdq</bpmn:incoming>
+      <bpmn:outgoing>Flow_097bas3</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="Activity_1qubrl4" name="Notify user to call doctor">
+      <bpmn:extensionElements>
+        <camunda:connector>
+          <camunda:inputOutput>
+            <camunda:inputParameter name="headers">
+              <camunda:map>
+                <camunda:entry key="content-type">application/json</camunda:entry>
+              </camunda:map>
+            </camunda:inputParameter>
+            <camunda:inputParameter name="method">POST</camunda:inputParameter>
+            <camunda:inputParameter name="url">http://siddhi.local:8280/camundaStream</camunda:inputParameter>
+            <camunda:inputParameter name="payload">{"patientId":"${patient}", "description":"Call doctor notification", "processInstanceId":"${execution.getProcessInstanceId()}"}</camunda:inputParameter>
+          </camunda:inputOutput>
+          <camunda:connectorId>http-connector</camunda:connectorId>
+        </camunda:connector>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0igeaeb</bpmn:incoming>
+      <bpmn:outgoing>Flow_0txooau</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="Flow_1wzox4p" name="high" sourceRef="Gateway_1mxd8w3" targetRef="Gateway_1mhvr7r">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${ketoneConcentration &gt;= 7}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:parallelGateway id="Gateway_1mhvr7r">
+      <bpmn:incoming>Flow_1wzox4p</bpmn:incoming>
+      <bpmn:outgoing>Flow_1jcjzdq</bpmn:outgoing>
+      <bpmn:outgoing>Flow_0igeaeb</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    <bpmn:sequenceFlow id="Flow_1jcjzdq" sourceRef="Gateway_1mhvr7r" targetRef="Activity_0whrgxl" />
+    <bpmn:sequenceFlow id="Flow_0igeaeb" sourceRef="Gateway_1mhvr7r" targetRef="Activity_1qubrl4" />
+    <bpmn:sequenceFlow id="Flow_097bas3" sourceRef="Activity_0whrgxl" targetRef="Gateway_1b0ilco" />
+    <bpmn:parallelGateway id="Gateway_1b0ilco">
+      <bpmn:incoming>Flow_097bas3</bpmn:incoming>
+      <bpmn:incoming>Flow_0txooau</bpmn:incoming>
+      <bpmn:outgoing>Flow_0ahgtpe</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    <bpmn:endEvent id="Event_1ygvvbq">
+      <bpmn:incoming>Flow_05p9rx6</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_0ahgtpe" sourceRef="Gateway_1b0ilco" targetRef="Gateway_095z0hb" />
+    <bpmn:sequenceFlow id="Flow_05p9rx6" sourceRef="Gateway_095z0hb" targetRef="Event_1ygvvbq" />
+    <bpmn:sequenceFlow id="Flow_0txooau" sourceRef="Activity_1qubrl4" targetRef="Gateway_1b0ilco" />
+    <bpmn:serviceTask id="Activity_01le2sn" name="Notify doctor about patient&#39;s ketoacidosis risk">
+      <bpmn:extensionElements>
+        <camunda:connector>
+          <camunda:inputOutput>
+            <camunda:inputParameter name="headers">
+              <camunda:map>
+                <camunda:entry key="content-type">application/json</camunda:entry>
+              </camunda:map>
+            </camunda:inputParameter>
+            <camunda:inputParameter name="method">POST</camunda:inputParameter>
+            <camunda:inputParameter name="payload">{"patientId":"${patient}", "description":"Docter notification ketoacidosis", "processInstanceId":"${execution.getProcessInstanceId()}"}</camunda:inputParameter>
+            <camunda:inputParameter name="url">http://siddhi.local:8280/camundaStream</camunda:inputParameter>
+          </camunda:inputOutput>
+          <camunda:connectorId>http-connector</camunda:connectorId>
+        </camunda:connector>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_18neonb</bpmn:incoming>
+      <bpmn:outgoing>Flow_0ix355m</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="Flow_0ix355m" sourceRef="Activity_01le2sn" targetRef="Gateway_095z0hb" />
+    <bpmn:intermediateCatchEvent id="Event_1xk5hyl" name="60 min">
+      <bpmn:incoming>Flow_1p3udih</bpmn:incoming>
+      <bpmn:outgoing>Flow_18neonb</bpmn:outgoing>
+      <bpmn:timerEventDefinition id="TimerEventDefinition_1bxy16w">
+        <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT60M</bpmn:timeDuration>
+      </bpmn:timerEventDefinition>
+    </bpmn:intermediateCatchEvent>
+    <bpmn:sequenceFlow id="Flow_1p3udih" sourceRef="Gateway_1faou3n" targetRef="Event_1xk5hyl" />
+    <bpmn:sequenceFlow id="Flow_18neonb" sourceRef="Event_1xk5hyl" targetRef="Activity_01le2sn" />
+    <bpmn:exclusiveGateway id="Gateway_0bows55">
+      <bpmn:incoming>Flow_0iomzns</bpmn:incoming>
+      <bpmn:incoming>Flow_1qm69m5</bpmn:incoming>
+      <bpmn:incoming>Flow_1rlynzr</bpmn:incoming>
+      <bpmn:outgoing>Flow_0hjmwiv</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="Flow_0iomzns" sourceRef="Event_0nx76uk" targetRef="Gateway_0bows55" />
+    <bpmn:sequenceFlow id="Flow_1qm69m5" name="True" sourceRef="Gateway_0hat2w4" targetRef="Gateway_0bows55">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${risk == 'True'}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_1rlynzr" sourceRef="Event_1glr51j" targetRef="Gateway_0bows55" />
+    <bpmn:sequenceFlow id="Flow_0hjmwiv" sourceRef="Gateway_0bows55" targetRef="Activity_15z0j1a" />
+    <bpmn:sequenceFlow id="Flow_13ahagx" sourceRef="Event_riskEvaluationReceived" targetRef="Gateway_0hat2w4" />
+    <bpmn:startEvent id="Event_0ckmejr">
+      <bpmn:outgoing>Flow_04vih3a</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:textAnnotation id="TextAnnotation_030aoor">
+      <bpmn:text>User evaluates their condition and possible risks factors</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Association_06omjqm" sourceRef="Activity_Notify_Ketoacidosis_Evaluation" targetRef="TextAnnotation_030aoor" />
+    <bpmn:textAnnotation id="TextAnnotation_1ldprqn">
+      <bpmn:text>risk evaluation received</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Association_13xdbjr" sourceRef="Event_riskEvaluationReceived" targetRef="TextAnnotation_1ldprqn" />
+  </bpmn:process>
+  <bpmn:message id="Message_09nn2no" name="Message_Ketone_Concentration_Level_Received" />
+  <bpmn:message id="Message_05dp1f1" name="risk_evaluation_received" />
+  <bpmn:message id="Message_19k4rwo" name="Message_Risk_Evaluation_Received" />
+  <bpmn:message id="Message_1l8hoq8" name="Message_a" />
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_Ketoacidosis">
+      <bpmndi:BPMNEdge id="Flow_13ahagx_di" bpmnElement="Flow_13ahagx">
+        <di:waypoint x="498" y="301" />
+        <di:waypoint x="565" y="301" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0hjmwiv_di" bpmnElement="Flow_0hjmwiv">
+        <di:waypoint x="714" y="301" />
+        <di:waypoint x="738" y="301" />
+        <di:waypoint x="738" y="300" />
+        <di:waypoint x="760" y="300" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1rlynzr_di" bpmnElement="Flow_1rlynzr">
+        <di:waypoint x="548" y="440" />
+        <di:waypoint x="690" y="440" />
+        <di:waypoint x="690" y="325" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1qm69m5_di" bpmnElement="Flow_1qm69m5">
+        <di:waypoint x="615" y="301" />
+        <di:waypoint x="640" y="301" />
+        <di:waypoint x="640" y="300" />
+        <di:waypoint x="665" y="300" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="629" y="283" width="22" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0iomzns_di" bpmnElement="Flow_0iomzns">
+        <di:waypoint x="932" y="230" />
+        <di:waypoint x="690" y="230" />
+        <di:waypoint x="690" y="275" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_18neonb_di" bpmnElement="Flow_18neonb">
+        <di:waypoint x="910" y="428" />
+        <di:waypoint x="910" y="540" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1p3udih_di" bpmnElement="Flow_1p3udih">
+        <di:waypoint x="910" y="325" />
+        <di:waypoint x="910" y="392" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0ix355m_di" bpmnElement="Flow_0ix355m">
+        <di:waypoint x="960" y="580" />
+        <di:waypoint x="1840" y="580" />
+        <di:waypoint x="1840" y="180" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0txooau_di" bpmnElement="Flow_0txooau">
+        <di:waypoint x="1590" y="380" />
+        <di:waypoint x="1750" y="380" />
+        <di:waypoint x="1750" y="315" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_05p9rx6_di" bpmnElement="Flow_05p9rx6">
+        <di:waypoint x="1845" y="175" />
+        <di:waypoint x="1962" y="175" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0ahgtpe_di" bpmnElement="Flow_0ahgtpe">
+        <di:waypoint x="1775" y="290" />
+        <di:waypoint x="1820" y="290" />
+        <di:waypoint x="1820" y="200" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_097bas3_di" bpmnElement="Flow_097bas3">
+        <di:waypoint x="1590" y="230" />
+        <di:waypoint x="1750" y="230" />
+        <di:waypoint x="1750" y="265" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0igeaeb_di" bpmnElement="Flow_0igeaeb">
+        <di:waypoint x="1360" y="325" />
+        <di:waypoint x="1360" y="380" />
+        <di:waypoint x="1490" y="380" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1jcjzdq_di" bpmnElement="Flow_1jcjzdq">
+        <di:waypoint x="1360" y="275" />
+        <di:waypoint x="1360" y="230" />
+        <di:waypoint x="1490" y="230" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1wzox4p_di" bpmnElement="Flow_1wzox4p">
+        <di:waypoint x="1245" y="300" />
+        <di:waypoint x="1335" y="300" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1281" y="282" width="21" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1x9yifs_di" bpmnElement="Flow_1x9yifs">
+        <di:waypoint x="393" y="326" />
+        <di:waypoint x="393" y="440" />
+        <di:waypoint x="512" y="440" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0txc5po_di" bpmnElement="Flow_0txc5po">
+        <di:waypoint x="418" y="301" />
+        <di:waypoint x="462" y="301" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1pilp3l_di" bpmnElement="Flow_1pilp3l">
+        <di:waypoint x="340" y="301" />
+        <di:waypoint x="368" y="301" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0fg5cry_di" bpmnElement="Flow_0fg5cry">
+        <di:waypoint x="1211" y="284" />
+        <di:waypoint x="1180" y="230" />
+        <di:waypoint x="968" y="230" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1145" y="263" width="48" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1m6txv3_di" bpmnElement="Flow_1m6txv3">
+        <di:waypoint x="1220" y="275" />
+        <di:waypoint x="1220" y="175" />
+        <di:waypoint x="1795" y="175" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1500" y="157" width="18" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1q058ya_di" bpmnElement="Flow_1q058ya">
+        <di:waypoint x="1088" y="300" />
+        <di:waypoint x="1195" y="300" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_03os2n2_di" bpmnElement="Flow_03os2n2">
+        <di:waypoint x="935" y="300" />
+        <di:waypoint x="1052" y="300" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_11f1k2m_di" bpmnElement="Flow_11f1k2m">
+        <di:waypoint x="860" y="300" />
+        <di:waypoint x="885" y="300" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0jpxiqy_di" bpmnElement="Flow_0jpxiqy">
+        <di:waypoint x="590" y="276" />
+        <di:waypoint x="590" y="120" />
+        <di:waypoint x="1820" y="120" />
+        <di:waypoint x="1820" y="150" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1256" y="93" width="27" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_04vih3a_di" bpmnElement="Flow_04vih3a">
+        <di:waypoint x="188" y="301" />
+        <di:waypoint x="240" y="301" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Gateway_0hat2w4_di" bpmnElement="Gateway_0hat2w4" isMarkerVisible="true">
+        <dc:Bounds x="565" y="276" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_095z0hb_di" bpmnElement="Gateway_095z0hb" isMarkerVisible="true">
+        <dc:Bounds x="1795" y="150" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_1w6bm9r_di" bpmnElement="Gateway_1faou3n">
+        <dc:Bounds x="885" y="275" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_16nzx9z_di" bpmnElement="Event_16nzx9z">
+        <dc:Bounds x="1052" y="282" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1036" y="325" width="68" height="40" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_1mxd8w3_di" bpmnElement="Gateway_1mxd8w3" isMarkerVisible="true">
+        <dc:Bounds x="1195" y="275" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0nk7l26_di" bpmnElement="Event_0nx76uk">
+        <dc:Bounds x="932" y="212" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="933" y="255" width="34" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1vpzdum_di" bpmnElement="Activity_Notify_Ketoacidosis_Evaluation">
+        <dc:Bounds x="240" y="261" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_1xwa2xs_di" bpmnElement="Gateway_0q72ho3">
+        <dc:Bounds x="368" y="276" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0hl3z56_di" bpmnElement="Event_riskEvaluationReceived">
+        <dc:Bounds x="462" y="283" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="445" y="326" width="71" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1glr51j_di" bpmnElement="Event_1glr51j">
+        <dc:Bounds x="512" y="422" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="513" y="465" width="34" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_00m7a9l_di" bpmnElement="Activity_15z0j1a">
+        <dc:Bounds x="760" y="260" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0meye8r_di" bpmnElement="Activity_0whrgxl">
+        <dc:Bounds x="1490" y="190" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_0u4nio6_di" bpmnElement="Gateway_1mhvr7r">
+        <dc:Bounds x="1335" y="275" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_0vqu3hi_di" bpmnElement="Gateway_1b0ilco">
+        <dc:Bounds x="1725" y="265" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1ygvvbq_di" bpmnElement="Event_1ygvvbq">
+        <dc:Bounds x="1962" y="157" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_00508dm_di" bpmnElement="Activity_01le2sn">
+        <dc:Bounds x="860" y="540" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1xk5hyl_di" bpmnElement="Event_1xk5hyl">
+        <dc:Bounds x="892" y="392" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="848" y="403" width="34" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_0bows55_di" bpmnElement="Gateway_0bows55" isMarkerVisible="true">
+        <dc:Bounds x="665" y="275" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="TextAnnotation_030aoor_di" bpmnElement="TextAnnotation_030aoor">
+        <dc:Bounds x="380" y="140" width="100" height="70" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="TextAnnotation_1ldprqn_di" bpmnElement="TextAnnotation_1ldprqn">
+        <dc:Bounds x="430" y="220" width="100" height="40" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1c0ydxv_di" bpmnElement="Event_0ckmejr">
+        <dc:Bounds x="152" y="283" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_12wlplk_di" bpmnElement="Activity_1qubrl4">
+        <dc:Bounds x="1490" y="340" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Association_06omjqm_di" bpmnElement="Association_06omjqm">
+        <di:waypoint x="332" y="261" />
+        <di:waypoint x="386" y="210" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Association_13xdbjr_di" bpmnElement="Association_13xdbjr">
+        <di:waypoint x="480" y="283" />
+        <di:waypoint x="480" y="260" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
